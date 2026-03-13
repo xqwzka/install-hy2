@@ -2,13 +2,13 @@
 set -euo pipefail
 
 if [[ ${EUID:-$(id -u)} -ne 0 ]]; then
-  echo "Please run as root"
+  echo "璇蜂娇鐢?root 杩愯姝よ剼鏈?
   exit 1
 fi
 
-echo "=== HY2 One-Click Installer ==="
+echo "=== HY2 涓€閿畨瑁呰剼鏈?==="
 
-read -r -p "Input UDP port (Enter=random 20000-65535): " INPUT_PORT
+read -r -p "璇疯緭鍏?UDP 绔彛锛堝洖杞?闅忔満 20000-65535锛? " INPUT_PORT
 
 pick_random_port() {
   local p
@@ -25,19 +25,25 @@ pick_random_port() {
 if [[ -z "${INPUT_PORT}" ]]; then
   PORT="$(pick_random_port || true)"
   if [[ -z "${PORT:-}" ]]; then
-    echo "Failed to find a free random UDP port"
+    echo "鏈壘鍒板彲鐢ㄩ殢鏈虹鍙?
     exit 1
   fi
 else
   if ! [[ "$INPUT_PORT" =~ ^[0-9]+$ ]] || (( INPUT_PORT < 1 || INPUT_PORT > 65535 )); then
-    echo "Invalid port: $INPUT_PORT"
+    echo "绔彛鏃犳晥: $INPUT_PORT"
     exit 1
   fi
   PORT="$INPUT_PORT"
 fi
 
-read -r -p "Input domain (Enter=use IP + self-signed cert): " DOMAIN
-read -r -p "Input password (Enter=random): " PASSWORD
+read -r -p "璇疯緭鍏ュ煙鍚嶏紙鍥炶溅=涓嶄娇鐢ㄥ煙鍚嶏紝鑷姩鑷璇佷功锛? " DOMAIN
+read -r -p "璇疯緭鍏ヨ妭鐐瑰悕绉帮紙鍥炶溅=浣跨敤褰撳ぉ鏃ユ湡锛? " PROFILE_NAME
+if [[ -z "${PROFILE_NAME}" ]]; then
+  PROFILE_NAME="$(date +%F)"
+fi
+LINK_NAME="${PROFILE_NAME// /_}"
+
+read -r -p "璇疯緭鍏ュ瘑鐮侊紙鍥炶溅=鑷姩闅忔満锛? " PASSWORD
 if [[ -z "${PASSWORD}" ]]; then
   PASSWORD="$(openssl rand -hex 12)"
 fi
@@ -47,7 +53,7 @@ if [[ -z "${PUBLIC_IP}" ]]; then
   PUBLIC_IP="$(hostname -I 2>/dev/null | awk '{print $1}' || true)"
 fi
 if [[ -z "${PUBLIC_IP}" ]]; then
-  echo "Cannot detect server IP"
+  echo "鏃犳硶妫€娴嬫湇鍔″櫒鍏綉 IP"
   exit 1
 fi
 
@@ -86,7 +92,7 @@ masquerade:
     rewriteHost: true
 EOF
 else
-  read -r -p "Input email for ACME (Enter=admin@${DOMAIN}): " ACME_EMAIL
+  read -r -p "璇疯緭鍏?ACME 閭锛堝洖杞?admin@${DOMAIN}锛? " ACME_EMAIL
   if [[ -z "${ACME_EMAIL}" ]]; then
     ACME_EMAIL="admin@${DOMAIN}"
   fi
@@ -138,7 +144,7 @@ fi
 
 sleep 1
 if ! systemctl is-active --quiet hysteria-server.service; then
-  echo "hysteria-server failed to start"
+  echo "hysteria-server 鍚姩澶辫触"
   journalctl -u hysteria-server.service -n 50 --no-pager || true
   exit 1
 fi
@@ -146,28 +152,27 @@ fi
 if [[ -z "${DOMAIN}" ]]; then
   HOST="${PUBLIC_IP}"
   EXTRA_QS="insecure=1"
+  TLS_DESC="鑷璇佷功锛堝鎴风闇€寮€鍚笉楠岃瘉璇佷功锛?
 else
   HOST="${DOMAIN}"
   EXTRA_QS=""
+  TLS_DESC="ACME 璇佷功"
 fi
 
 echo
-echo "================= HY2 READY ================="
-echo "Server IP : ${PUBLIC_IP}"
-echo "Host      : ${HOST}"
-echo "UDP Port  : ${PORT}"
-echo "Password  : ${PASSWORD}"
-if [[ -z "${DOMAIN}" ]]; then
-  echo "TLS       : self-signed (insecure=1 required)"
-else
-  echo "TLS       : ACME domain certificate"
-fi
+echo "================= HY2 閮ㄧ讲瀹屾垚 ================="
+echo "鏈嶅姟鍣↖P : ${PUBLIC_IP}"
+echo "杩炴帴鍦板潃 : ${HOST}"
+echo "UDP绔彛  : ${PORT}"
+echo "瀵嗙爜      : ${PASSWORD}"
+echo "鑺傜偣鍚嶇О  : ${PROFILE_NAME}"
+echo "璇佷功绫诲瀷  : ${TLS_DESC}"
 echo
 if [[ -n "${EXTRA_QS}" ]]; then
-  echo "hysteria2://${PASSWORD}@${HOST}:${PORT}/?${EXTRA_QS}#hy2-${HOST}"
-  echo "hy2://${PASSWORD}@${HOST}:${PORT}?${EXTRA_QS}#hy2-${HOST}"
+  echo "hysteria2://${PASSWORD}@${HOST}:${PORT}/?${EXTRA_QS}#${LINK_NAME}"
+  echo "hy2://${PASSWORD}@${HOST}:${PORT}?${EXTRA_QS}#${LINK_NAME}"
 else
-  echo "hysteria2://${PASSWORD}@${HOST}:${PORT}/#hy2-${HOST}"
-  echo "hy2://${PASSWORD}@${HOST}:${PORT}#hy2-${HOST}"
+  echo "hysteria2://${PASSWORD}@${HOST}:${PORT}/#${LINK_NAME}"
+  echo "hy2://${PASSWORD}@${HOST}:${PORT}#${LINK_NAME}"
 fi
-echo "============================================="
+echo "================================================"
