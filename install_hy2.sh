@@ -151,15 +151,15 @@ EOF
 
 show_menu() {
   cat <<'EOF'
-??????????
-1) ?? HY2??????????
-2) ?? 3x-ui
+Select installation option:
+1) Install HY2 (auto random high UDP port)
+2) Install 3x-ui
 EOF
-  read -r -p "???? [1-2]: " choice
+  read -r -p "Enter choice [1-2]: " choice
   case "$choice" in
     1) install_hy2 ;;
     2) install_3xui ;;
-    *) echo "????: $choice" >&2; exit 1 ;;
+    *) echo "Invalid option: $choice" >&2; exit 1 ;;
   esac
 }
 
