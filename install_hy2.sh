@@ -2,13 +2,13 @@
 set -euo pipefail
 
 if [[ ${EUID:-$(id -u)} -ne 0 ]]; then
-  echo "璇蜂娇鐢?root 杩愯姝よ剼鏈?
+  echo $'\u8bf7\u4f7f\u7528 root \u8fd0\u884c\u6b64\u811a\u672c'
   exit 1
 fi
 
-echo "=== HY2 涓€閿畨瑁呰剼鏈?==="
+echo $'=== HY2 \u4e00\u952e\u5b89\u88c5\u811a\u672c ==='
 
-read -r -p "璇疯緭鍏?UDP 绔彛锛堝洖杞?闅忔満 20000-65535锛? " INPUT_PORT
+read -r -p $'\u8bf7\u8f93\u5165 UDP \u7aef\u53e3\uff08\u56de\u8f66=\u968f\u673a 20000-65535\uff09: ' INPUT_PORT
 
 pick_random_port() {
   local p
@@ -25,25 +25,25 @@ pick_random_port() {
 if [[ -z "${INPUT_PORT}" ]]; then
   PORT="$(pick_random_port || true)"
   if [[ -z "${PORT:-}" ]]; then
-    echo "鏈壘鍒板彲鐢ㄩ殢鏈虹鍙?
+    echo $'\u672a\u627e\u5230\u53ef\u7528\u968f\u673a\u7aef\u53e3'
     exit 1
   fi
 else
   if ! [[ "$INPUT_PORT" =~ ^[0-9]+$ ]] || (( INPUT_PORT < 1 || INPUT_PORT > 65535 )); then
-    echo "绔彛鏃犳晥: $INPUT_PORT"
+    echo $'\u7aef\u53e3\u65e0\u6548: '"$INPUT_PORT"
     exit 1
   fi
   PORT="$INPUT_PORT"
 fi
 
-read -r -p "璇疯緭鍏ュ煙鍚嶏紙鍥炶溅=涓嶄娇鐢ㄥ煙鍚嶏紝鑷姩鑷璇佷功锛? " DOMAIN
-read -r -p "璇疯緭鍏ヨ妭鐐瑰悕绉帮紙鍥炶溅=浣跨敤褰撳ぉ鏃ユ湡锛? " PROFILE_NAME
+read -r -p $'\u8bf7\u8f93\u5165\u57df\u540d\uff08\u56de\u8f66=\u4e0d\u4f7f\u7528\u57df\u540d\uff0c\u81ea\u52a8\u81ea\u7b7e\u8bc1\u4e66\uff09: ' DOMAIN
+read -r -p $'\u8bf7\u8f93\u5165\u8282\u70b9\u540d\u79f0\uff08\u56de\u8f66=\u4f7f\u7528\u5f53\u5929\u65e5\u671f\uff09: ' PROFILE_NAME
 if [[ -z "${PROFILE_NAME}" ]]; then
   PROFILE_NAME="$(date +%F)"
 fi
 LINK_NAME="${PROFILE_NAME// /_}"
 
-read -r -p "璇疯緭鍏ュ瘑鐮侊紙鍥炶溅=鑷姩闅忔満锛? " PASSWORD
+read -r -p $'\u8bf7\u8f93\u5165\u5bc6\u7801\uff08\u56de\u8f66=\u81ea\u52a8\u968f\u673a\uff09: ' PASSWORD
 if [[ -z "${PASSWORD}" ]]; then
   PASSWORD="$(openssl rand -hex 12)"
 fi
@@ -53,7 +53,7 @@ if [[ -z "${PUBLIC_IP}" ]]; then
   PUBLIC_IP="$(hostname -I 2>/dev/null | awk '{print $1}' || true)"
 fi
 if [[ -z "${PUBLIC_IP}" ]]; then
-  echo "鏃犳硶妫€娴嬫湇鍔″櫒鍏綉 IP"
+  echo $'\u65e0\u6cd5\u68c0\u6d4b\u670d\u52a1\u5668\u516c\u7f51 IP'
   exit 1
 fi
 
@@ -92,7 +92,7 @@ masquerade:
     rewriteHost: true
 EOF
 else
-  read -r -p "璇疯緭鍏?ACME 閭锛堝洖杞?admin@${DOMAIN}锛? " ACME_EMAIL
+  read -r -p $'\u8bf7\u8f93\u5165 ACME \u90ae\u7bb1\uff08\u56de\u8f66=admin@'"${DOMAIN}"$'\uff09: ' ACME_EMAIL
   if [[ -z "${ACME_EMAIL}" ]]; then
     ACME_EMAIL="admin@${DOMAIN}"
   fi
@@ -144,7 +144,7 @@ fi
 
 sleep 1
 if ! systemctl is-active --quiet hysteria-server.service; then
-  echo "hysteria-server 鍚姩澶辫触"
+  echo $'hysteria-server \u542f\u52a8\u5931\u8d25'
   journalctl -u hysteria-server.service -n 50 --no-pager || true
   exit 1
 fi
@@ -152,21 +152,21 @@ fi
 if [[ -z "${DOMAIN}" ]]; then
   HOST="${PUBLIC_IP}"
   EXTRA_QS="insecure=1"
-  TLS_DESC="鑷璇佷功锛堝鎴风闇€寮€鍚笉楠岃瘉璇佷功锛?
+  TLS_DESC=$'\u81ea\u7b7e\u8bc1\u4e66\uff08\u5ba2\u6237\u7aef\u9700\u5f00\u542f\u4e0d\u9a8c\u8bc1\u8bc1\u4e66\uff09'
 else
   HOST="${DOMAIN}"
   EXTRA_QS=""
-  TLS_DESC="ACME 璇佷功"
+  TLS_DESC=$'ACME \u8bc1\u4e66'
 fi
 
 echo
-echo "================= HY2 閮ㄧ讲瀹屾垚 ================="
-echo "鏈嶅姟鍣↖P : ${PUBLIC_IP}"
-echo "杩炴帴鍦板潃 : ${HOST}"
-echo "UDP绔彛  : ${PORT}"
-echo "瀵嗙爜      : ${PASSWORD}"
-echo "鑺傜偣鍚嶇О  : ${PROFILE_NAME}"
-echo "璇佷功绫诲瀷  : ${TLS_DESC}"
+echo $'================= HY2 \u90e8\u7f72\u5b8c\u6210 ================='
+echo $'\u670d\u52a1\u5668IP : '"${PUBLIC_IP}"
+echo $'\u8fde\u63a5\u5730\u5740 : '"${HOST}"
+echo $'UDP\u7aef\u53e3  : '"${PORT}"
+echo $'\u5bc6\u7801      : '"${PASSWORD}"
+echo $'\u8282\u70b9\u540d\u79f0  : '"${PROFILE_NAME}"
+echo $'\u8bc1\u4e66\u7c7b\u578b  : '"${TLS_DESC}"
 echo
 if [[ -n "${EXTRA_QS}" ]]; then
   echo "hysteria2://${PASSWORD}@${HOST}:${PORT}/?${EXTRA_QS}#${LINK_NAME}"
@@ -175,4 +175,4 @@ else
   echo "hysteria2://${PASSWORD}@${HOST}:${PORT}/#${LINK_NAME}"
   echo "hy2://${PASSWORD}@${HOST}:${PORT}#${LINK_NAME}"
 fi
-echo "================================================"
+echo $'================================================'
