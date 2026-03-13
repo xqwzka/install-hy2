@@ -150,12 +150,23 @@ EOF
 }
 
 show_menu() {
+  local choice="${INSTALL_OPTION:-}"
+
   cat <<'EOF'
 Select installation option:
 1) Install HY2 (auto random high UDP port)
 2) Install 3x-ui
 EOF
-  read -r -p "Enter choice [1-2]: " choice
+
+  if [[ "$choice" != "1" && "$choice" != "2" ]]; then
+    if [[ -r /dev/tty ]]; then
+      read -r -p "Enter choice [1-2]: " choice </dev/tty
+    else
+      echo "No interactive TTY. Use: INSTALL_OPTION=1 bash ... or INSTALL_OPTION=2 bash ..." >&2
+      exit 1
+    fi
+  fi
+
   case "$choice" in
     1) install_hy2 ;;
     2) install_3xui ;;
